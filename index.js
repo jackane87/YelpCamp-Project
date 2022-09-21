@@ -33,6 +33,8 @@ app.set('views', path.join(__dirname, 'views'));
 
 app.use(express.urlencoded({extended: true}));
 app.use(methodOverride('_method'));
+//This is setting up a public directory to serve
+app.use(express.static(path.join(__dirname,'public')));
 
 //We are using all required route files here.
 app.use('/campgrounds', campgroundRoutes);
