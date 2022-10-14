@@ -11,11 +11,20 @@ const session = require('express-session');
 const flash = require('connect-flash');
 const ExpressError = require('./utils/ExpressError');
 const methodOverride = require('method-override');
+//importing passport and passport-local for authentication purposes
+const passport = require('passport');
+const LocalStrategy = require('passport-local');
+//user model is imported for authentication
+const User = require('./models/user.js')
 const { findByIdAndDelete } = require('./models/review.js');
+
+
 //Requring the campgroundRoutes.js file here for all campground routes
 const campgroundRoutes = require('./routes/campgroundRoutes');
 //Requring the reviewsRoutes.js file here for all review routes
 const reviewsRoutes = require('./routes/reviewsRoutes');
+//Requireing the usersRoutes.js file here for all user routes
+const usersRoutes = require('./routes/usersRoutes');
 
 //opening a connection to our mongo db. If unsuccessful, the error will be logged to the console.
 mongoose.connect('mongodb://localhost:27017/yelp-camp', {useNewUrlParser: true, useUnifiedTopology: true})
@@ -51,8 +60,19 @@ const sessionConfig = {
 app.use(session(sessionConfig));
 app.use(flash());
 
-//This is middleware for ever single request that takes whatever is in the flash under success or error and have access to it in locals under keys 'success' or error. Can then be accessed on any of our ejs templates.
+//Setting up passport to use local authentication
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new LocalStrategy(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
+//This these are middleware for ever single request
 app.use(function(req, res, next){
+    console.log(req.session)
+    //This gives us access to req.user on every page under currentUser. We can use this to conditionally display items if user is logged in.
+    res.locals.currentUser = req.user;
+    //takes whatever is in the flash under success or error and have access to it in locals under keys 'success' or error. Can then be accessed on any of our ejs templates.
     res.locals.success = req.flash('success');
     res.locals.error = req.flash('error');
     next();
@@ -61,6 +81,7 @@ app.use(function(req, res, next){
 //We are using all required route files here.
 app.use('/campgrounds', campgroundRoutes);
 app.use('/campgrounds/:id/reviews', reviewsRoutes);
+app.use('/', usersRoutes);
 
 app.get('/', function(req, res){
     res.render('home')
