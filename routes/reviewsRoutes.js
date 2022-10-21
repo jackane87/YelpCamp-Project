@@ -8,28 +8,19 @@ const ExpressError = require('../utils/ExpressError');
 const Campground = require('../models/campground.js');
 const Review = require('../models/review.js');
 
-//Requiring the Joi review schema
-const { reviewSchema } = require('../validationSchemas.js');
+//Requiring validateReview middleware from the middleware file
+const { validateReview, isLoggedIn, isReviewAuthor } = require('../middleware');
 
-//review validation middleware
-const validateReview = function(req, res, next){
-    //This line is using the schema to validate the body and save the error if present.
-    const { error } = reviewSchema.validate(req.body);
-    //This is checking if there is an error to throw and express error with the error details and a status code
-    if(error){
-        //Details is an array of objects, so we are mapping over this and joining into a single string comma separated.
-        const msg = error.details.map(el => el.message).join(',')
-        throw new ExpressError(msg , 400)
-    } else{
-        next();
-    }
-
-}
-
-//This route add a new review to specified campground
-router.post('/', validateReview, wrapAsync(async function(req, res){
+//This route add a new review to specified campground. First runs isLoggedIn middleware to check if user is logged in, otherwise redirects to Login
+//Then validates the review (i.e. makes sure there is a comment and rating.
+router.post('/', isLoggedIn, validateReview, wrapAsync(async function(req, res){
+    //Finding the campground for which attempting to add review to.
     const campground = await Campground.findById(req.params.id);
+    //This is the review (comment and rating).
     const review = new Review(req.body.review);
+    //Here we are setting the review author to the currently logged in user.
+    review.author = req.user._id;
+    //Adding the review to the campground
     campground.reviews.push(review);
     await review.save();
     await campground.save();
@@ -39,7 +30,7 @@ router.post('/', validateReview, wrapAsync(async function(req, res){
 }))
 
 //This route deletes a specific review from the selected campground
-router.delete('/:reviewId', wrapAsync(async function(req, res){
+router.delete('/:reviewId', isLoggedIn, isReviewAuthor, wrapAsync(async function(req, res){
     //This line has destructured the id and reviewId from req.params
     const { id, reviewId } = req.params;
     //This line we are waiting for the review matching the reviewId to be removed from the specific campground

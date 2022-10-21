@@ -1,27 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const wrapAsync = require('../utils/wrapAsync');
-const ExpressError = require('../utils/ExpressError');
+
 //This is our Campground model
 const Campground = require('../models/campground.js');
-//Requiring the Joi campground schema
-const { campgroundSchema } = require('../validationSchemas.js');
 //Requiring the middleware that checks if a user is logged in.
-const { isLoggedIn } = require('../middleware');
-
-//campground validation middleware
-const validateCampground = function (req, res, next) {
-    //This line is using the schema to validate the body and save the error if present.
-    const { error } = campgroundSchema.validate(req.body);
-    //This is checking if there is an error to throw and express error with the error details and a status code
-    if (error) {
-        //Details is an array of objects, so we are mapping over this and joining into a single string comma separated.
-        const msg = error.details.map(el => el.message).join(',')
-        throw new ExpressError(msg, 400)
-    } else {
-        next();
-    }
-}
+const { isLoggedIn, isAuthor, validateCampground } = require('../middleware');
 
 router.get('/', async function (req, res) {
     const campgrounds = await Campground.find({});
@@ -38,13 +22,25 @@ router.get('/new', isLoggedIn, function (req, res) {
 //validateCampground performs server side validation before completing the creation of a new campground and stops if validation fails.
 router.post('/', isLoggedIn, validateCampground, wrapAsync(async function (req, res, next) {
     const campground = new Campground(req.body.campground);
+    //This line sets the campground author to the currently logged in user.
+    campground.author = req.user._id;
     await campground.save();
     req.flash('success', 'Successfully made a new campground!')
     res.redirect(`/campgrounds/${campground._id}`);
 }))
 
+//This is the get rout for getting a specific camground
 router.get('/:id', wrapAsync(async function (req, res) {
-    const campground = await Campground.findById(req.params.id).populate('reviews');
+    //here we are finding the campground we've selected to view
+    const campground = await Campground.findById(req.params.id).populate(
+        //Here we are populating each review for the campground
+        {path: 'reviews',
+        //Here we are populating the author of each review
+        populate: {
+            path: 'author'
+        //This last populate is populating the author of the campground    
+        }}).populate('author');
+    console.log(campground);
     //checking to see if the id specified exists. If it does not, then display flash error and redirect to campgrounds list page.
     if (!campground) {
         req.flash('error', 'Campground cannot be found.');
@@ -56,7 +52,8 @@ router.get('/:id', wrapAsync(async function (req, res) {
     }
 }))
 
-router.get('/:id/edit', isLoggedIn, wrapAsync(async function (req, res) {
+//GET route for editing a campground
+router.get('/:id/edit', isLoggedIn, isAuthor, wrapAsync(async function (req, res) {
     const campground = await Campground.findById(req.params.id);
     //checking to see if the id specified exists. If it does not, then display flash error and redirect to campgrounds list page.
     if (!campground) {
@@ -71,15 +68,14 @@ router.get('/:id/edit', isLoggedIn, wrapAsync(async function (req, res) {
 
 //This is our route for updating an existing campground. 
 //validateCampground performs server side validation before moving forward and stops if validation fails.
-router.put('/:id', isLoggedIn, validateCampground, wrapAsync(async function (req, res) {
-    const { id } = req.params;
-    const campground = await Campground.findByIdAndUpdate(id, { ...req.body.campground })
+router.put('/:id', isLoggedIn,isAuthor, validateCampground, wrapAsync(async function (req, res) {
+    const campground = await Campground.findByIdAndUpdate(id, {...req.body.campground});
     req.flash('success', 'Successfully updated the campground!');
     res.redirect(`/campgrounds/${campground._id}`);
 }))
 
 //This route is deleting a specific campground from the database.
-router.delete('/:id', isLoggedIn, wrapAsync(async function (req, res) {
+router.delete('/:id', isLoggedIn, isAuthor, wrapAsync(async function (req, res) {
     const { id } = req.params;
     await Campground.findByIdAndDelete(id)
     req.flash('success', 'Campground deleted successfully!');

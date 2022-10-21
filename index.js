@@ -23,7 +23,7 @@ const { findByIdAndDelete } = require('./models/review.js');
 const campgroundRoutes = require('./routes/campgroundRoutes');
 //Requring the reviewsRoutes.js file here for all review routes
 const reviewsRoutes = require('./routes/reviewsRoutes');
-//Requireing the usersRoutes.js file here for all user routes
+//Requiring the usersRoutes.js file here for all user routes
 const usersRoutes = require('./routes/usersRoutes');
 
 //opening a connection to our mongo db. If unsuccessful, the error will be logged to the console.
@@ -40,7 +40,6 @@ app.engine('ejs', ejsMate);
 //Setting the view engine to ejs here
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
-
 app.use(express.urlencoded({extended: true}));
 app.use(methodOverride('_method'));
 //This is setting up a public directory to serve

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const wrapAsync = require('../utils/wrapAsync');
 const User = require('../models/user');
+const { checkReturnTo } = require('../middleware');
 const passport = require('passport');
 
 router.get('/register', function(req, res){
@@ -32,12 +33,12 @@ router.get('/login', function(req,res){
 })
 
 //This is the POST route that logs the user in. If there is an error in the login and error will be flashed and the user redirected to the login screen.
-router.post('/login', passport.authenticate('local', { failureFlash: true, failureRedirect: '/login' }), function(req, res){
+router.post('/login', checkReturnTo, passport.authenticate('local', { failureFlash: true, failureRedirect: '/login' }), function(req, res){
     //if the login is successful, flash the welcome message and redirect to campgrounds
     req.flash('success', 'Welcome Back ' + req.user.username + '!');
     //Variable stores the returnTo Url if one is present. This would be if user attempted to access a page that requires login, that path is saved and user is redirected to login.
     //With this we can redirec them to the URL they were trying to access before being redirected to the login screen. If a returnTo url was NOT present, then redirectURL is set to campgrounds route.
-    const redirectUrl = req.session.returnTo || '/campgrounds';
+    const redirectUrl = res.locals.returnTo || '/campgrounds';
     res.redirect(redirectUrl);
 })
 
