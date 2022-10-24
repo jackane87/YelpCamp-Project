@@ -1,85 +1,44 @@
 const express = require('express');
 const router = express.Router();
+//Requiring the Campground Controller where we've defined all our controller methods.
+const campgroundController = require('../controllers/campgroundController');
+//Requiring the wrapAsync utility that lets us handle potential errors from async functions.
 const wrapAsync = require('../utils/wrapAsync');
-
-//This is our Campground model
-const Campground = require('../models/campground.js');
 //Requiring the middleware that checks if a user is logged in.
 const { isLoggedIn, isAuthor, validateCampground } = require('../middleware');
 
-router.get('/', async function (req, res) {
-    const campgrounds = await Campground.find({});
-    res.render('campgrounds/index', { campgrounds })
-})
 
-//This is the GET route for the new campground.
-router.get('/new', isLoggedIn, function (req, res) {
-    //If user is logged in display the add new campground page.
-    res.render('campgrounds/new');
-})
+
+//router.get('/', wrapAsync(campgroundController.index));
+
+//This is the GET route for the new campground. First check if user is logged in, then if so display form.
+router.get('/new', isLoggedIn, campgroundController.renderNewForm);
 
 //This is our POST route for a new campground.
 //validateCampground performs server side validation before completing the creation of a new campground and stops if validation fails.
-router.post('/', isLoggedIn, validateCampground, wrapAsync(async function (req, res, next) {
-    const campground = new Campground(req.body.campground);
-    //This line sets the campground author to the currently logged in user.
-    campground.author = req.user._id;
-    await campground.save();
-    req.flash('success', 'Successfully made a new campground!')
-    res.redirect(`/campgrounds/${campground._id}`);
-}))
+//router.post('/', isLoggedIn, validateCampground, wrapAsync(campgroundController.createCampground));
 
-//This is the get rout for getting a specific camground
-router.get('/:id', wrapAsync(async function (req, res) {
-    //here we are finding the campground we've selected to view
-    const campground = await Campground.findById(req.params.id).populate(
-        //Here we are populating each review for the campground
-        {path: 'reviews',
-        //Here we are populating the author of each review
-        populate: {
-            path: 'author'
-        //This last populate is populating the author of the campground    
-        }}).populate('author');
-    console.log(campground);
-    //checking to see if the id specified exists. If it does not, then display flash error and redirect to campgrounds list page.
-    if (!campground) {
-        req.flash('error', 'Campground cannot be found.');
-        return res.redirect('/campgrounds');
-    }
-    //if the id specified exists, display the requested campground 
-    else {
-        res.render('campgrounds/show', { campground });
-    }
-}))
+//This is the get route for getting a specific camground
+//router.get('/:id', wrapAsync(campgroundController.showCampground));
 
 //GET route for editing a campground
-router.get('/:id/edit', isLoggedIn, isAuthor, wrapAsync(async function (req, res) {
-    const campground = await Campground.findById(req.params.id);
-    //checking to see if the id specified exists. If it does not, then display flash error and redirect to campgrounds list page.
-    if (!campground) {
-        req.flash('error', 'Campground cannot be found.');
-        return res.redirect('/campgrounds');
-    }
-    //display the edit page for the requested campground
-    else {
-        res.render('campgrounds/edit', { campground });
-    }
-}))
+router.get('/:id/edit', isLoggedIn, isAuthor, wrapAsync(campgroundController.renderEditForm));
 
 //This is our route for updating an existing campground. 
-//validateCampground performs server side validation before moving forward and stops if validation fails.
-router.put('/:id', isLoggedIn,isAuthor, validateCampground, wrapAsync(async function (req, res) {
-    const campground = await Campground.findByIdAndUpdate(id, {...req.body.campground});
-    req.flash('success', 'Successfully updated the campground!');
-    res.redirect(`/campgrounds/${campground._id}`);
-}))
+//first check user is logged in, then check to make sure user is author (creator) of campground, then validateCampground performs server side validation before moving forward and stops if validation fails.
+//router.put('/:id', isLoggedIn, isAuthor, validateCampground, wrapAsync(campgroundController.editCampground));
 
 //This route is deleting a specific campground from the database.
-router.delete('/:id', isLoggedIn, isAuthor, wrapAsync(async function (req, res) {
-    const { id } = req.params;
-    await Campground.findByIdAndDelete(id)
-    req.flash('success', 'Campground deleted successfully!');
-    res.redirect('/campgrounds/');
-}))
+//router.delete('/:id', isLoggedIn, isAuthor, wrapAsync(campgroundController.deleteCampground));
+
+//express allows for chainable route handlers as shown below. These work exactly the same as the routes above that are commented out.
+router.route('/')
+    .get(wrapAsync(campgroundController.index))
+    .post(isLoggedIn, validateCampground, wrapAsync(campgroundController.createCampground))
+
+router.route('/:id')
+    .get(wrapAsync(campgroundController.showCampground))
+    .put(isLoggedIn, isAuthor, validateCampground, wrapAsync(campgroundController.editCampground))
+    .delete(isLoggedIn, isAuthor, wrapAsync(campgroundController.deleteCampground))
 
 module.exports = router;
