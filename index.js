@@ -1,3 +1,7 @@
+if(process.env.NODE_ENV !== "production"){
+    require('dotenv').config();
+}
+
 /* We are loading modules here */
 //Defining express which is a node.js web application framework. Helps us build our routes.
 const express = require('express');

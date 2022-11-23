@@ -2,8 +2,29 @@
   <link rel="stylesheet" href="/styles/stars.css">
   <div class="row">
     <div class="col-6">
+      <div id="campgroundCarousel" class="carousel slide" data-ride="carousel">
+        <div class="carousel-inner">
+          <!--This ejs loops over each image in the images array for the specific campground and adds a carosel item.-->
+          <% campground.images.forEach((img, i) => { %> 
+          <!-- The ejs below is checking if the image from the loop above is index 0 and if so, set the class 'active'; otherwise, don't add a class. This is done so that on load we are only setting active for one item instead of all -->
+          <div class="carousel-item <%= i === 0 ? 'active' : ''%>">
+            <img class="d-block w-100" src="<%= img.url%>" alt="">
+          </div>
+          <% }) %> 
+        </div>
+        <!--ejs below is checking if the images array for the campground has more than 1 image. If so, display the prev/next controls; otherwise do not display them to avoid user confusion-->
+        <% if(campground.images.length > 1) { %>  
+        <a class="carousel-control-prev" href="#campgroundCarousel" role="button" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          <span class="sr-only">Previous</span>
+        </a>
+        <a class="carousel-control-next" href="#campgroundCarousel" role="button" data-bs-slide="next">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          <span class="sr-only">Next</span>
+        </a>
+        <% } %> 
+      </div>
       <div class="card mb-3">
-        <img src="<%= campground.image%>" class="card-img-top" alt="...">
         <div class="card-body">
           <h5 class="card-title">
             <%= campground.title %>

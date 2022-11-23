@@ -1,5 +1,9 @@
 const express = require('express');
 const router = express.Router();
+//Multer is a node.js middleware for handling multipart/form-data, which is primarily used for uploading files.
+const multer = require('multer');
+const {storage} = require('../cloudinary');
+const upload = multer({storage});
 //Requiring the Campground Controller where we've defined all our controller methods.
 const campgroundController = require('../controllers/campgroundController');
 //Requiring the wrapAsync utility that lets us handle potential errors from async functions.
@@ -34,11 +38,12 @@ router.get('/:id/edit', isLoggedIn, isAuthor, wrapAsync(campgroundController.ren
 //express allows for chainable route handlers as shown below. These work exactly the same as the routes above that are commented out.
 router.route('/')
     .get(wrapAsync(campgroundController.index))
-    .post(isLoggedIn, validateCampground, wrapAsync(campgroundController.createCampground))
+    .post(isLoggedIn, upload.array('image'), validateCampground, wrapAsync(campgroundController.createCampground))
+
 
 router.route('/:id')
     .get(wrapAsync(campgroundController.showCampground))
-    .put(isLoggedIn, isAuthor, validateCampground, wrapAsync(campgroundController.editCampground))
+    .put(isLoggedIn, isAuthor, upload.array('image'), validateCampground, wrapAsync(campgroundController.editCampground))
     .delete(isLoggedIn, isAuthor, wrapAsync(campgroundController.deleteCampground))
 
 module.exports = router;
