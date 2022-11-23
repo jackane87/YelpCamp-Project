@@ -8,7 +8,7 @@
           <% campground.images.forEach((img, i) => { %> 
           <!-- The ejs below is checking if the image from the loop above is index 0 and if so, set the class 'active'; otherwise, don't add a class. This is done so that on load we are only setting active for one item instead of all -->
           <div class="carousel-item <%= i === 0 ? 'active' : ''%>">
-            <img class="d-block w-100" src="<%= img.url%>" alt="">
+            <img class="d-block w-100" src="<%= img.cardImage%>" alt="">
           </div>
           <% }) %> 
         </div>
