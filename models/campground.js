@@ -2,14 +2,24 @@ const mongoose = require('mongoose');
 const Review = require('./review');
 const Schema = mongoose.Schema;
 
-const CampgroundSchema = new Schema({
-    title: String,
-    images: [
-        {
+const ImageSchema = new Schema({
             url: String,
             filename: String
-        }
-    ],
+});
+
+//This virtual gets us a thumbnail to present on the edit page instead of full image.
+ImageSchema.virtual('thumbnail').get(function(){
+   return this.url.replace('/upload', '/upload/w_200,ar_4:3');
+});
+
+//this virtual is used so that the image carousel on that show page does not resize as it is shuffling through the images.
+ImageSchema.virtual('cardImage').get(function(){
+    return this.url.replace('/upload', '/upload/ar_4:3,c_crop');
+});
+
+const CampgroundSchema = new Schema({
+    title: String,
+    images: [ImageSchema],
     price: Number,
     description: String,
     location: String,
