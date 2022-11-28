@@ -20,6 +20,18 @@ ImageSchema.virtual('cardImage').get(function(){
 const CampgroundSchema = new Schema({
     title: String,
     images: [ImageSchema],
+    //setting up geojson for mapbox.
+    geometry: {
+        type: {
+            type: String,
+            enum: ['Point'],
+            required: true
+        },
+        coordinates: {
+            type: [Number],
+            required: true
+        }
+    },
     price: Number,
     description: String,
     location: String,
@@ -32,7 +44,7 @@ const CampgroundSchema = new Schema({
         ref: 'Review'
         }
     ]
-})
+});
 
 //This is mongoose middleware that will delete all reviews associated with the campground being deleted.
 CampgroundSchema.post('findOneAndDelete', async function(doc){
