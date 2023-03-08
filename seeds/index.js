@@ -33,7 +33,7 @@ const sample = function(array){
 
 const seedDB = async function(){
     await Campground.deleteMany({});
-    for(let i = 0; i < 5; i++){
+    for(let i = 0; i < 200; i++){
         const random1000 = Math.floor(Math.random() * 1000)
         const price = Math.floor(Math.random() *20 + 10)
         const camp = new Campground({
@@ -45,16 +45,19 @@ const seedDB = async function(){
             price: price,
             geometry: {
               type : "Point",
-              coordinates: [ -114.627616, 32.692659 ] 
+              coordinates: [
+                cities[random1000].longitude,
+                cities[random1000].latitude,
+              ] 
             },
             images: [
               {
-                url: 'https://res.cloudinary.com/dldqahnaf/image/upload/v1666734344/YelpCamp/chvxczv4ege71kmme7ae.jpg',
-                filename: 'YelpCamp/chvxczv4ege71kmme7ae'
+                url: 'https://res.cloudinary.com/dldqahnaf/image/upload/v1678222278/YelpCamp/tommy-lisbin-xr-y6Ruw7K8-unsplash_lcw01f.jpg',
+                filename: 'YelpCamp/tommy-lisbin-xr-y6Ruw7K8-unsplash_lcw01f.jpg'
               },
               {
-                url: 'https://res.cloudinary.com/dldqahnaf/image/upload/v1666734345/YelpCamp/rlne7rsftz7se76dlpry.jpg',
-                filename: 'YelpCamp/rlne7rsftz7se76dlpry'
+                url: 'https://res.cloudinary.com/dldqahnaf/image/upload/v1678222239/YelpCamp/jonathan-forage-1azAjl8FTnU-unsplash_m6uyne.jpg',
+                filename: 'YelpCamp/jonathan-forage-1azAjl8FTnU-unsplash_m6uyne.jpg'
               }
             ]
         });
