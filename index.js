@@ -21,6 +21,8 @@ const LocalStrategy = require('passport-local');
 //user model is imported for authentication
 const User = require('./models/user.js')
 const { findByIdAndDelete } = require('./models/review.js');
+//importing mongo sanitize to clear out any undesired characters from query strings (e.g. $ or .)
+const mongoSanitize = require('express-mongo-sanitize');
 
 
 //Requring the campgroundRoutes.js file here for all campground routes
@@ -49,13 +51,18 @@ app.use(methodOverride('_method'));
 //This is setting up a public directory to serve
 app.use(express.static(path.join(__dirname,'public')));
 
+app.use(mongoSanitize());
+
 //This is used to setup a session with the parameters specified below
 const sessionConfig = {
+    name: 'session',
     secret: 'thisshouldbeabettersecret',
     resave: false,
     saveUninitialized: true,
     cookie: {
         httpOnly: true,
+        //Setting secure to true makes it so that the cookie can only be configured/changed over https 
+        //secure: true,
         expires: Date.now() + 1000 * 60 *60 * 24* 7,
         maxAge: 1000 * 60 *60 * 24* 7
     }
@@ -72,7 +79,7 @@ passport.deserializeUser(User.deserializeUser());
 
 //This these are middleware for ever single request
 app.use(function(req, res, next){
-    console.log(req.session)
+    console.log(req.query);
     //This gives us access to req.user on every page under currentUser. We can use this to conditionally display items if user is logged in.
     res.locals.currentUser = req.user;
     //takes whatever is in the flash under success or error and have access to it in locals under keys 'success' or error. Can then be accessed on any of our ejs templates.
